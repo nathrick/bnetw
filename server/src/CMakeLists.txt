@@ -13,8 +13,8 @@ if(Boost_FOUND)
 endif(Boost_FOUND)
 
 set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/server/inc)
-set(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} -lpthread -lm)
-set(SOURCE_FILES main.cpp)
+set(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} -lboost_serialization -lboost_system -lpthread -lm)
+set(SOURCE_FILES message.cpp server.cpp main.cpp)
 
 include_directories(${INCLUDE_DIRS})
 add_executable(${EXECUTABLE} ${SOURCE_FILES})

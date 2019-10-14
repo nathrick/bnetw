@@ -2,22 +2,28 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "connection.hpp"
+#include "server.hpp"
 
-void print(const boost::system::error_code& /*e*/)
+int main(int argc, char* argv[])
 {
-  std::cout << "Async" << std::endl;
-}
+    try
+    {
+      // Check command line arguments.
+      if (argc != 2)
+      {
+        std::cerr << "Usage: " << argv[0]  << " <port>" << std::endl;
+        return 1;
+      }
+      unsigned short port = boost::lexical_cast<unsigned short>(argv[1]);
 
-int main()
-{
-    boost::asio::io_context io;
-
-    boost::asio::deadline_timer t(io, boost::posix_time::seconds(5));
-    t.async_wait(&print);
-
-    std::cout << "Main" << std::endl;
-
-    io.run();
+      boost::asio::io_context io_context;
+      gsdk_server::server server(io_context, port);
+      io_context.run();
+    }
+    catch (std::exception& e)
+    {
+      std::cerr << e.what() << std::endl;
+    }
 
     return 0;
 }

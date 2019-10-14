@@ -1,5 +1,5 @@
-#ifndef SERIALIZATION_CONNECTION_HPP
-#define SERIALIZATION_CONNECTION_HPP
+#ifndef CONNECTION_HPP
+#define CONNECTION_HPP
 
 #include <boost/asio.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -12,7 +12,7 @@
 #include <sstream>
 #include <vector>
 
-namespace server {
+namespace gsdk_server {
 
 /// The connection class provides serialization primitives on top of a socket.
 /**
@@ -81,8 +81,7 @@ public:
   /// a tuple since boost::bind seems to have trouble binding a function object
   /// created using boost::bind as a parameter.
   template <typename T, typename Handler>
-  void handle_read_header(const boost::system::error_code& e,
-      T& t, boost::tuple<Handler> handler)
+  void handle_read_header(const boost::system::error_code& e, T& t, boost::tuple<Handler> handler)
   {
     if (e)
     {
@@ -103,20 +102,14 @@ public:
 
       // Start an asynchronous call to receive the data.
       inbound_data_.resize(inbound_data_size);
-      void (connection::*f)(
-          const boost::system::error_code&,
-          T&, boost::tuple<Handler>)
-        = &connection::handle_read_data<T, Handler>;
-      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_),
-        boost::bind(f, this,
-          boost::asio::placeholders::error, boost::ref(t), handler));
+      void (connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>) = &connection::handle_read_data<T, Handler>;
+      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_), boost::bind(f, this, boost::asio::placeholders::error, boost::ref(t), handler));
     }
   }
 
   /// Handle a completed read of message data.
   template <typename T, typename Handler>
-  void handle_read_data(const boost::system::error_code& e,
-      T& t, boost::tuple<Handler> handler)
+  void handle_read_data(const boost::system::error_code& e, T& t, boost::tuple<Handler> handler)
   {
     if (e)
     {
@@ -167,6 +160,6 @@ private:
 
 typedef boost::shared_ptr<connection> connection_ptr;
 
-} // namespace server
+} // namespace gsdk_server
 
-#endif // SERIALIZATION_CONNECTION_HPP
+#endif // CONNECTION_HPP
