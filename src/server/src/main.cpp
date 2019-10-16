@@ -2,7 +2,7 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "connection.hpp"
-#include "server.hpp"
+#include "server/inc/server.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
       unsigned short port = boost::lexical_cast<unsigned short>(argv[1]);
 
       boost::asio::io_context io_context;
-      gsdk_server::server server(io_context, port);
+      gsdk::server server(io_context, port);
       io_context.run();
     }
     catch (std::exception& e)

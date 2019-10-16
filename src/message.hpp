@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-namespace gsdk_server
+namespace gsdk
 {
 
 enum class MESSAGE_TYPE : int

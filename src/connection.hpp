@@ -12,7 +12,8 @@
 #include <sstream>
 #include <vector>
 
-namespace gsdk_server {
+namespace gsdk
+{
 
 /// The connection class provides serialization primitives on top of a socket.
 /**
@@ -160,6 +161,6 @@ private:
 
 typedef boost::shared_ptr<connection> connection_ptr;
 
-} // namespace gsdk_server
+} // namespace gsdk
 
 #endif // CONNECTION_HPP

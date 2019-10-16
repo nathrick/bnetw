@@ -1,6 +1,6 @@
 #include "message.hpp"
 
-using namespace gsdk_server;
+using namespace gsdk;
 
 void message::printType()
 {
