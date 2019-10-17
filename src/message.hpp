@@ -23,6 +23,7 @@ constexpr auto to_underlying(E e) noexcept
 class message
 {
 public:
+    message() : type_(MESSAGE_TYPE::UNKNOWN) {}
     message(MESSAGE_TYPE type) : type_(type) {}
 
     void printType();
@@ -32,6 +33,8 @@ public:
     {
       ar & type_;
     }
+
+    MESSAGE_TYPE type() { return type_; }
 
 private:
     MESSAGE_TYPE type_ = MESSAGE_TYPE::UNKNOWN;

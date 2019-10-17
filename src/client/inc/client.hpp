@@ -27,6 +27,11 @@ public:
 private:
   /// The connection to the server.
   connection connection_;
+  
+  /// Last received message
+  message message_;
+
+  void wait_for_message();
 
 };
 

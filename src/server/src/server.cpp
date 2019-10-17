@@ -20,7 +20,7 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
     clients_.insert( std::make_pair( conn->socket().remote_endpoint(), message(MESSAGE_TYPE::UNKNOWN)) );
     //std::cout << "Client: " << conn->socket().remote_endpoint().address().to_string() << " : " << conn->socket().remote_endpoint().port() << "\n";
 
-    auto m = clients_.at(conn->socket().remote_endpoint());
+    auto& m = clients_.at(conn->socket().remote_endpoint());
     conn->async_read( m,  boost::bind(&server::handle_read, this, boost::asio::placeholders::error, conn) );
   
   }
@@ -45,6 +45,27 @@ void server::handle_read(const boost::system::error_code& e, connection_ptr conn
     auto new_message = clients_.at(conn->socket().remote_endpoint());
 
     new_message.printType();
+
+    switch (new_message.type())
+    {
+    case MESSAGE_TYPE::UNKNOWN:
+      /* code */
+      break;
+    case MESSAGE_TYPE::CONNECTION_ACK:
+      /* code */
+      break;      
+    case MESSAGE_TYPE::TEST_TYPE_1:
+    {
+      auto m = message(MESSAGE_TYPE::CONNECTION_ACK);
+      conn->async_write(m, boost::bind(&server::handle_write, this, boost::asio::placeholders::error, conn, m));
+      break;
+    }
+    case MESSAGE_TYPE::TEST_TYPE_2:
+      /* code */
+      break;
+    default:
+      break;
+    }
   }
   
   auto m = clients_.at(conn->socket().remote_endpoint());
