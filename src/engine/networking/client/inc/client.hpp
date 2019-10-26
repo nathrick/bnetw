@@ -5,11 +5,14 @@
 #include <boost/bind.hpp>
 #include <iostream>
 #include <vector>
-#include "message.hpp"
-#include "connection.hpp" // Must come before boost/serialization headers.
+#include "engine/networking/connection.hpp" // Must come before boost/serialization headers.
+#include "engine/networking/messages/message.hpp"
 #include <boost/serialization/vector.hpp>
 
 namespace gsdk
+{
+
+namespace networking
 {
 
 class client
@@ -31,9 +34,9 @@ private:
   /// Last received message
   message message_;
 
-  void wait_for_message();
-
 };
+
+} // namespace networking
 
 } // namespace gsdk
 

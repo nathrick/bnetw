@@ -15,17 +15,12 @@
 namespace gsdk
 {
 
-/// The connection class provides serialization primitives on top of a socket.
-/**
- * Each message sent using this class consists of:
- * @li An 8-byte header containing the length of the serialized data in
- * hexadecimal.
- * @li The serialized data.
- */
+namespace networking
+{
+
 class connection
 {
 public:
-  /// Constructor.
   connection(boost::asio::io_service& io_service)
     : socket_(io_service)
   {
@@ -104,7 +99,8 @@ public:
       // Start an asynchronous call to receive the data.
       inbound_data_.resize(inbound_data_size);
       void (connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>) = &connection::handle_read_data<T, Handler>;
-      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_), boost::bind(f, this, boost::asio::placeholders::error, boost::ref(t), handler));
+      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_), 
+                              boost::bind(f, this, boost::asio::placeholders::error, boost::ref(t), handler));
     }
   }
 
@@ -160,6 +156,8 @@ private:
 };
 
 typedef boost::shared_ptr<connection> connection_ptr;
+
+} // namespace networking
 
 } // namespace gsdk
 

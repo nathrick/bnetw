@@ -6,12 +6,17 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <map>
-#include "message.hpp"
-#include "connection.hpp" // Must come before boost/serialization headers.
+
+#include "api/api.hpp"
+#include "engine/networking/connection.hpp" // Must come before boost/serialization headers.
+
 #include <boost/serialization/vector.hpp>
 #include <boost/asio/basic_socket.hpp>
 
 namespace gsdk
+{
+
+namespace networking
 {
 
 class server
@@ -23,7 +28,7 @@ public:
     void handle_accept(const boost::system::error_code& e, connection_ptr conn);
 
     /// Handle completion of a write operation.
-    void handle_write(const boost::system::error_code& e, connection_ptr conn, message& m);
+    void handle_write(const boost::system::error_code& e, connection_ptr conn);
 
     /// Handle completion of a read operation.
     void handle_read(const boost::system::error_code& e, connection_ptr conn);
@@ -32,9 +37,13 @@ private:
   /// The acceptor object used to accept incoming socket connections.
   boost::asio::ip::tcp::acceptor acceptor_;
 
-  std::map<boost::asio::ip::tcp::endpoint, message> clients_;
+  std::map<api::UserID, boost::asio::ip::tcp::endpoint> clients_;
+
+  api::UserID server_id_;
 };
 
-} // namespace gsdk_server
+} // namespace networking
+
+} // namespace gsdk
 
 #endif // SERVER_HPP

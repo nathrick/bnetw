@@ -1,6 +1,6 @@
-#include "client/inc/client.hpp"
+#include "engine/networking/client/inc/client.hpp"
 
-using namespace gsdk;
+using namespace gsdk::networking;
 
 client::client(boost::asio::io_context& io_context, const std::string& host, const std::string& service)
     : connection_(io_context)
@@ -20,10 +20,10 @@ void client::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
-        auto m = message(MESSAGE_TYPE::TEST_TYPE_1);
-        connection_.async_write(m, boost::bind(&client::handle_write, this, boost::asio::placeholders::error));
+        // auto m = message(MESSAGE_TYPE::TEST_TYPE_1);
+        // connection_.async_write(m, boost::bind(&client::handle_write, this, boost::asio::placeholders::error));
 
-        wait_for_message();
+        connection_.async_read(message_, boost::bind(&client::handle_read, this, boost::asio::placeholders::error));
     }
     else
     {
@@ -36,19 +36,12 @@ void client::handle_connect(const boost::system::error_code& e)
 
 void client::handle_read(const boost::system::error_code& e)
 {
-    std::cout << "handle_read - ";
-    
-    message_.printType();
+    std::cout << "handle_read - data:  " << message_.data() << '\n';
 
-    wait_for_message();
+    connection_.async_read(message_, boost::bind(&client::handle_read, this, boost::asio::placeholders::error));
 }
 
 void client::handle_write(const boost::system::error_code& e)
 {
 
-}
-
-void client::wait_for_message()
-{
-    connection_.async_read(message_, boost::bind(&client::handle_read, this, boost::asio::placeholders::error));
 }

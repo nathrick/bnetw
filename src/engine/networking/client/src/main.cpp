@@ -1,8 +1,8 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "connection.hpp"
-#include "client/inc/client.hpp"
+#include "engine/networking/connection.hpp"
+#include "engine/networking/client/inc/client.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     }
 
     boost::asio::io_context io_context;
-    gsdk::client client(io_context, argv[1], argv[2]);
+    gsdk::networking::client client(io_context, argv[1], argv[2]);
     io_context.run();
   }
   catch (std::exception& e)
