@@ -12,7 +12,11 @@ client::client(boost::asio::io_context& io_context, const std::string& host, con
 
     // Start an asynchronous connect operation.
     boost::asio::async_connect(connection_.socket(), endpoint_iterator,
-        boost::bind(&client::handle_connect, this, boost::asio::placeholders::error));
+                                [this](boost::system::error_code e, boost::asio::ip::tcp::resolver::iterator)
+                                {
+                                    handle_connect(e);
+                                }
+    );
 }
 
 
@@ -20,10 +24,12 @@ void client::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
-        // auto m = message(MESSAGE_TYPE::TEST_TYPE_1);
-        // connection_.async_write(m, boost::bind(&client::handle_write, this, boost::asio::placeholders::error));
-
-        connection_.async_read(message_, boost::bind(&client::handle_read, this, boost::asio::placeholders::error));
+        connection_.async_read(message_, 
+                                [this](boost::system::error_code e,  std::size_t)
+                                {
+                                    handle_read(e);
+                                }
+        );
     }
     else
     {
@@ -36,9 +42,21 @@ void client::handle_connect(const boost::system::error_code& e)
 
 void client::handle_read(const boost::system::error_code& e)
 {
-    std::cout << "handle_read - data:  " << message_.data() << '\n';
+    if (!e)
+    {
+        std::cout << "handle_read - data:  " << message_.data() << '\n';
 
-    connection_.async_read(message_, boost::bind(&client::handle_read, this, boost::asio::placeholders::error));
+        connection_.async_read(message_, 
+                                [this](boost::system::error_code e,  std::size_t)
+                                {
+                                    handle_read(e);
+                                }
+        );
+    }
+    else
+    {
+      std::cerr << "handle_read - error:  " << e.message() << std::endl;
+    }
 }
 
 void client::handle_write(const boost::system::error_code& e)

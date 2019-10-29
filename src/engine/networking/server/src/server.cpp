@@ -9,8 +9,13 @@ server::server(boost::asio::io_context& io_context, unsigned short port)
     : acceptor_(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
     // Start an accept operation for a new connection.
-    connection_ptr new_conn(new connection(acceptor_.get_executor().context()));
-    acceptor_.async_accept(new_conn->socket(), boost::bind(&server::handle_accept, this, boost::asio::placeholders::error, new_conn));
+    auto new_conn = boost::make_shared<connection>(acceptor_.get_executor().context());
+    acceptor_.async_accept(new_conn->socket(), 
+                           [this, new_conn](const boost::system::error_code e)
+                           {
+                             handle_accept(e, new_conn);
+                           }
+    );
 }
 
 void server::handle_accept(const boost::system::error_code& e, connection_ptr conn)
@@ -26,28 +31,46 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
     
     /* Add generated UserID to connected clients */
     clients_[userID] = conn->socket().remote_endpoint();
-    //clients_.insert( std::make_pair( conn->socket().remote_endpoint(), api::UserID{} ) );
-    //std::cout << "Client: " << conn->socket().remote_endpoint().address().to_string() << " : " << conn->socket().remote_endpoint().port() << "\n";
-
-    //conn->async_read( m,  boost::bind(&server::handle_read, this, boost::asio::placeholders::error, conn) );
 
     /* Prepare and send message to client */
     message m {MESSAGE_TYPE::REGISTER_USER, server_id_, userID};
     m.setData(std::to_string(uID));
-    conn->async_write( m,  boost::bind(&server::handle_write, this, boost::asio::placeholders::error, conn) );
+
+    conn->async_write(m, 
+                      [this, conn](boost::system::error_code e,  std::size_t)
+                      {
+                        handle_write(e, conn);
+                      }
+    );
   }
 
   // Start an accept operation for a new connection.
-  connection_ptr new_conn(new connection(acceptor_.get_executor().context()));
-  acceptor_.async_accept(new_conn->socket(), boost::bind(&server::handle_accept, this, boost::asio::placeholders::error, new_conn));
+  auto new_conn = boost::make_shared<connection>(acceptor_.get_executor().context());
+  acceptor_.async_accept(new_conn->socket(), 
+                         [this, new_conn](const boost::system::error_code e)
+                         {
+                            handle_accept(e, new_conn);
+                         }
+  );
 }
 
 void server::handle_write(const boost::system::error_code& e, connection_ptr conn)
 {
-    static_cast<void>(e);
-    static_cast<void>(conn);
-
-    //m.printType();
+  if(!e)
+  {
+    message m;
+    conn->async_read(m, 
+                      [this, conn](boost::system::error_code e,  std::size_t)
+                      {
+                        handle_read(e, conn);
+                      }
+    );
+  }
+  else
+  {
+    std::cerr << "handle_write - error:  " << e.message() << std::endl;
+  }
+  
 }
 
 void server::handle_read(const boost::system::error_code& e, connection_ptr conn)
