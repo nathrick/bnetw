@@ -34,6 +34,8 @@ private:
   /// Last received message
   message message_;
 
+  api::UserID id_;
+
 };
 
 } // namespace networking

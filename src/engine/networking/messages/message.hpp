@@ -36,7 +36,11 @@ public:
         {};
 
     void setData(const std::string & data) { data_ = data; }
-    std::string& data() { return data_; }
+    
+    const std::string& data() const { return data_; }
+    api::UserID senderID() const { return senderID_; }
+    api::UserID receiverID() const { return receiverID_; }
+    MESSAGE_TYPE type() const { return msg_type_; }
 
     template <typename Archive>
     void serialize(Archive& ar, const unsigned int version)

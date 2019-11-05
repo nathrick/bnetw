@@ -8,6 +8,7 @@
 #include <map>
 
 #include "api/api.hpp"
+#include "engine/networking/messages/message.hpp"
 #include "engine/networking/connection.hpp" // Must come before boost/serialization headers.
 
 #include <boost/serialization/vector.hpp>
@@ -28,16 +29,18 @@ public:
     void handle_accept(const boost::system::error_code& e, connection_ptr conn);
 
     /// Handle completion of a write operation.
-    void handle_write(const boost::system::error_code& e, connection_ptr conn);
+    void handle_write(const boost::system::error_code& e, api::UserID userID);
 
     /// Handle completion of a read operation.
-    void handle_read(const boost::system::error_code& e, connection_ptr conn);
+    void handle_read(const boost::system::error_code& e, api::UserID userID);
 
 private:
   /// The acceptor object used to accept incoming socket connections.
   boost::asio::ip::tcp::acceptor acceptor_;
 
-  std::map<api::UserID, boost::asio::ip::tcp::endpoint> clients_;
+  std::map<api::UserID, connection_ptr> clients_;
+
+  std::map<api::UserID, message> messages_;
 
   api::UserID server_id_;
 };

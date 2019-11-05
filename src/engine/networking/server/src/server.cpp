@@ -1,5 +1,4 @@
 #include "engine/networking/server/inc/server.hpp"
-#include "engine/networking/messages/message.hpp"
 
 #include <functional>
 
@@ -26,20 +25,19 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
     auto hash_string = conn->socket().remote_endpoint().address().to_string() + std::to_string(conn->socket().remote_endpoint().port()); 
     auto uID = std::hash<std::string>{}(hash_string);
     std::cout << "Generated userID: " << uID << '\n';
-    api::UserID userID;
-    userID.id_ = uID;
+    api::UserID userID{uID};
     
     /* Add generated UserID to connected clients */
-    clients_[userID] = conn->socket().remote_endpoint();
+    clients_[userID] = conn;
 
     /* Prepare and send message to client */
     message m {MESSAGE_TYPE::REGISTER_USER, server_id_, userID};
     m.setData(std::to_string(uID));
 
     conn->async_write(m, 
-                      [this, conn](boost::system::error_code e,  std::size_t)
+                      [this, userID](boost::system::error_code e,  std::size_t)
                       {
-                        handle_write(e, conn);
+                        handle_write(e, userID);
                       }
     );
   }
@@ -54,15 +52,16 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
   );
 }
 
-void server::handle_write(const boost::system::error_code& e, connection_ptr conn)
+void server::handle_write(const boost::system::error_code& e, api::UserID userID)
 {
   if(!e)
   {
-    message m;
+    auto& m = messages_[userID];
+    auto& conn = clients_[userID];
     conn->async_read(m, 
-                      [this, conn](boost::system::error_code e,  std::size_t)
+                      [this, conn, userID](boost::system::error_code e,  std::size_t)
                       {
-                        handle_read(e, conn);
+                        handle_read(e, userID);
                       }
     );
   }
@@ -73,38 +72,56 @@ void server::handle_write(const boost::system::error_code& e, connection_ptr con
   
 }
 
-void server::handle_read(const boost::system::error_code& e, connection_ptr conn)
+void server::handle_read(const boost::system::error_code& e, api::UserID userID)
 {
   if (!e)
   {
-  //   auto client_endpoint = conn->socket().remote_endpoint();
-  //   auto new_message = clients_.at(client_endpoint);
+    auto msg = messages_[userID];
 
-  //   std::cout << "Message from client: " << client_endpoint.address().to_string() << " : " << client_endpoint.port() << "\n";
-  //   new_message.printType();
+    switch (msg.type())
+    {
+      case MESSAGE_TYPE::UNKNOWN:
+        /* code */
+        std::cout << "Received message UNKNOWN\n";
+        break;
+      case MESSAGE_TYPE::TO_SERVER:
+        /* code */
+        std::cout << "Received message TO_SERVER\n";
+        break;      
+      case MESSAGE_TYPE::TO_USER:
+      {
+        std::cout << "Received message TO_USER\n";
+        break;
+      }
+      case MESSAGE_TYPE::TO_ALL:
+        {
+          std::cout << "Received message TO_ALL\n";
 
-  //   switch (new_message.type())
-  //   {
-  //   case MESSAGE_TYPE::UNKNOWN:
-  //     /* code */
-  //     break;
-  //   case MESSAGE_TYPE::CONNECTION_ACK:
-  //     /* code */
-  //     break;      
-  //   case MESSAGE_TYPE::TEST_TYPE_1:
-  //   {
-  //     auto m = message(MESSAGE_TYPE::CONNECTION_ACK);
-  //     conn->async_write(m, boost::bind(&server::handle_write, this, boost::asio::placeholders::error, conn, m));
-  //     break;
-  //   }
-  //   case MESSAGE_TYPE::TEST_TYPE_2:
-  //     /* code */
-  //     break;
-  //   default:
-  //     break;
-  //   }
+          for(auto & c : clients_)
+          {
+            /* Prepare and send message to all users */
+            if( !(c.first == msg.senderID()) )
+            {
+              message m { msg.type(), msg.receiverID(), c.first };
+              m.setData( msg.data() );
+
+              c.second->async_write(m, 
+                                    [this, userID](boost::system::error_code e,  std::size_t)
+                                    {
+                                      handle_write(e, userID);
+                                    }
+              );
+            }
+          }
+
+          break;
+        }
+      default:
+        break;
+    }
   }
-  
-  // auto m = clients_.at(conn->socket().remote_endpoint());
-  // conn->async_read( m,  boost::bind(&server::handle_read, this, boost::asio::placeholders::error, conn) );
+  else
+  {
+    std::cerr << "handle_read - error:  " << e.message() << std::endl;
+  }
 }

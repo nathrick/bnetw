@@ -1,5 +1,7 @@
 #include "engine/networking/client/inc/client.hpp"
 
+#include <sstream>
+
 using namespace gsdk::networking;
 
 client::client(boost::asio::io_context& io_context, const std::string& host, const std::string& service)
@@ -44,14 +46,52 @@ void client::handle_read(const boost::system::error_code& e)
 {
     if (!e)
     {
-        std::cout << "handle_read - data:  " << message_.data() << '\n';
+        switch (message_.type())
+        {
+        case MESSAGE_TYPE::UNKNOWN:
+            /* code */
+            std::cout << "Received message UNKNOWN\n";
+            break;
+        case MESSAGE_TYPE::REGISTER_USER:
+        {
+            std::istringstream iss(message_.data());
+            size_t id; iss >> id; id_ = id;
+            std::cout << "Received message REGISTER_USER, received user id: "<< id_ << '\n';
 
-        connection_.async_read(message_, 
+            /* Prepare and send message to server */
+            message m {MESSAGE_TYPE::TO_ALL, id_, message_.senderID()};
+            m.setData( std::string("User " + message_.data() + " is ACTIVE!") );
+
+            connection_.async_write(m, 
                                 [this](boost::system::error_code e,  std::size_t)
                                 {
-                                    handle_read(e);
+                                    handle_write(e);
                                 }
-        );
+            );
+
+            break;      
+        }
+        case MESSAGE_TYPE::TO_USER:
+        {
+            std::cout << "Received message TO_USER\n";
+            break;
+        }
+        case MESSAGE_TYPE::TO_ALL:
+        {
+            std::cout << "Received message TO_ALL: " << message_.data() << '\n';
+            
+            connection_.async_read(message_, 
+                        [this](boost::system::error_code e,  std::size_t)
+                        {
+                            handle_read(e);
+                        }
+            );
+
+            break;
+        }
+        default:
+            break;
+        }
     }
     else
     {
@@ -61,5 +101,18 @@ void client::handle_read(const boost::system::error_code& e)
 
 void client::handle_write(const boost::system::error_code& e)
 {
-
+    if(!e)
+    {
+        connection_.async_read(message_, 
+                                [this](boost::system::error_code e,  std::size_t)
+                                {
+                                    handle_read(e);
+                                }
+        );
+    }
+    else
+    {
+        std::cerr << "handle_write - error:  " << e.message() << std::endl;
+    }
+    
 }
