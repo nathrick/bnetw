@@ -20,21 +20,18 @@ class client
 public:
     client(boost::asio::io_context& io_context, const std::string& host, const std::string& service);
 
-    /// Handle completion of a connect operation.
-    void handle_connect(const boost::system::error_code& e);
-
-    void handle_read(const boost::system::error_code& e);
-
-    void handle_write(const boost::system::error_code& e);
+    void sendMessage(api::UserID userID, MESSAGE_TYPE type, const std::string & data);
 
 private:
-  /// The connection to the server.
   connection connection_;
-  
-  /// Last received message
   message message_;
-
   api::UserID id_;
+
+  void handle_connect(const boost::system::error_code& e);
+  void handle_read(const boost::system::error_code& e);
+  void handle_write(const boost::system::error_code& e);
+
+  void doRead();
 
 };
 

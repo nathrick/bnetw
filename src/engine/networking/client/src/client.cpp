@@ -26,12 +26,7 @@ void client::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
-        connection_.async_read(message_, 
-                                [this](boost::system::error_code e,  std::size_t)
-                                {
-                                    handle_read(e);
-                                }
-        );
+        doRead();
     }
     else
     {
@@ -58,16 +53,7 @@ void client::handle_read(const boost::system::error_code& e)
             size_t id; iss >> id; id_ = id;
             std::cout << "Received message REGISTER_USER, received user id: "<< id_ << '\n';
 
-            /* Prepare and send message to server */
-            message m {MESSAGE_TYPE::TO_ALL, id_, message_.senderID()};
-            m.setData( std::string("User " + message_.data() + " is ACTIVE!") );
-
-            connection_.async_write(m, 
-                                [this](boost::system::error_code e,  std::size_t)
-                                {
-                                    handle_write(e);
-                                }
-            );
+            sendMessage(message_.senderID(), MESSAGE_TYPE::TO_ALL, std::string("User " + message_.data() + " is ACTIVE!"));
 
             break;      
         }
@@ -80,12 +66,7 @@ void client::handle_read(const boost::system::error_code& e)
         {
             std::cout << "Received message TO_ALL: " << message_.data() << '\n';
             
-            connection_.async_read(message_, 
-                        [this](boost::system::error_code e,  std::size_t)
-                        {
-                            handle_read(e);
-                        }
-            );
+            doRead();
 
             break;
         }
@@ -103,16 +84,54 @@ void client::handle_write(const boost::system::error_code& e)
 {
     if(!e)
     {
-        connection_.async_read(message_, 
-                                [this](boost::system::error_code e,  std::size_t)
-                                {
-                                    handle_read(e);
-                                }
-        );
+        doRead();
     }
     else
     {
         std::cerr << "handle_write - error:  " << e.message() << std::endl;
     }
     
+}
+
+void client::sendMessage(api::UserID userID, MESSAGE_TYPE type, const std::string & data)
+{
+    if( id_ == 0 )
+    {
+        std::cerr << "Invalid client id\n";
+        return;
+    }
+
+    if( (type == MESSAGE_TYPE::UNKNOWN) || (type == MESSAGE_TYPE::REGISTER_USER) )
+    {
+        std::cerr << "Unhandled message type\n";
+        return;
+    }
+
+    if( data.empty() )
+    {
+        std::cerr << "Empty data\n";
+        return;
+    }
+
+    /* Prepare and send message to server */
+    message m {type, id_, userID};
+    m.setData( data );
+
+    connection_.async_write(m, 
+                        [this](boost::system::error_code e,  std::size_t)
+                        {
+                            handle_write(e);
+                        }
+    );
+
+}
+
+void client::doRead()
+{
+    connection_.async_read(message_, 
+                            [this](boost::system::error_code e,  std::size_t)
+                            {
+                                handle_read(e);
+                            }
+    );
 }
