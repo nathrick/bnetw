@@ -9,15 +9,41 @@ int main(int argc, char* argv[])
   try
   {
     // Check command line arguments.
-    if (argc != 3)
+    // if (argc != 3)
+    // {
+    //   std::cerr << "Usage: client <host> <port>" << std::endl;
+    //   return 1;
+    // }
+
+    //boost::asio::io_context io_context;
+    gsdk::networking::client client;
+
+    if(client.login())
     {
-      std::cerr << "Usage: client <host> <port>" << std::endl;
-      return 1;
+      char c;
+
+      do
+      {
+        std::cout << "Choose sth:" << std::endl;
+        std::cin >> c;
+
+        if(c == 'm')
+        {
+          client.sendBroadcastMessage( std::string("I am alive: " + client.id().toString()) );
+        }
+        else if(c == 'u')
+        {
+          size_t recv_uid;
+          std::cout << "Enter receiver user ID:\t";
+          std::cin >> recv_uid;
+
+          client.sendMessage(gsdk::api::UserID {recv_uid}, std::string("Direct msg from: " + client.id().toString()));
+        }
+
+      } while (c != 'c');
+
     }
 
-    boost::asio::io_context io_context;
-    gsdk::networking::client client(io_context, argv[1], argv[2]);
-    io_context.run();
   }
   catch (std::exception& e)
   {

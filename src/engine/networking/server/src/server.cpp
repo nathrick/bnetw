@@ -9,6 +9,11 @@ server::server(boost::asio::io_context& io_context, unsigned short port)
 {
     // Start an accept operation for a new connection.
     auto new_conn = boost::make_shared<connection>(acceptor_.get_executor().context());
+
+    auto hash_string = "secret server data"; 
+    auto sID = std::hash<std::string>{}(hash_string);
+    server_id_ = sID;
+
     acceptor_.async_accept(new_conn->socket(), 
                            [this, new_conn](const boost::system::error_code e)
                            {
@@ -40,6 +45,8 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
                         handle_write(e, userID);
                       }
     );
+
+    do_async_read_from_user(userID);
   }
 
   // Start an accept operation for a new connection.
@@ -56,14 +63,8 @@ void server::handle_write(const boost::system::error_code& e, api::UserID userID
 {
   if(!e)
   {
-    auto& m = messages_[userID];
-    auto& conn = clients_[userID];
-    conn->async_read(m, 
-                      [this, conn, userID](boost::system::error_code e,  std::size_t)
-                      {
-                        handle_read(e, userID);
-                      }
-    );
+    std::cout << "handle_write - OK" << std::endl;
+
   }
   else
   {
@@ -72,11 +73,25 @@ void server::handle_write(const boost::system::error_code& e, api::UserID userID
   
 }
 
+void server::do_async_read_from_user(api::UserID userID)
+{
+    auto& m = messages_[userID];
+    auto& conn = clients_[userID];
+    conn->async_read(m, 
+                      [this, userID](boost::system::error_code e,  std::size_t)
+                      {
+                        handle_read(e, userID);
+                      }
+    );
+}
+
 void server::handle_read(const boost::system::error_code& e, api::UserID userID)
 {
   if (!e)
   {
-    auto msg = messages_[userID];
+    std::cout << "messages_ size = " << messages_.size() << std::endl;
+    std::cout << "FROM " << userID << " ";
+    auto & msg = messages_[userID];
 
     switch (msg.type())
     {
@@ -91,34 +106,46 @@ void server::handle_read(const boost::system::error_code& e, api::UserID userID)
       case MESSAGE_TYPE::TO_USER:
       {
         std::cout << "Received message TO_USER\n";
+
+        auto & recv_conn = clients_[msg.receiverID()];
+        
+        recv_conn->async_write(msg,
+                              [this, userID](boost::system::error_code e,  std::size_t)
+                              {
+                                handle_write(e, userID);
+                              }
+        );
+
         break;
       }
       case MESSAGE_TYPE::TO_ALL:
+      {
+        std::cout << "Received message TO_ALL\n";
+
+        for(auto & c : clients_)
         {
-          std::cout << "Received message TO_ALL\n";
-
-          for(auto & c : clients_)
+          /* Prepare and send message to all users */
+          if( !(c.first == msg.senderID()) )
           {
-            /* Prepare and send message to all users */
-            if( !(c.first == msg.senderID()) )
-            {
-              message m { msg.type(), msg.receiverID(), c.first };
-              m.setData( msg.data() );
+            std::cout << "Sending to: " <<  c.first << std::endl;
+            message m { msg.type(), msg.receiverID(), c.first };
+            m.setData( msg.data() );
 
-              c.second->async_write(m, 
-                                    [this, userID](boost::system::error_code e,  std::size_t)
-                                    {
-                                      handle_write(e, userID);
-                                    }
-              );
-            }
+            c.second->async_write(m, 
+                                  [this, userID](boost::system::error_code e,  std::size_t)
+                                  {
+                                    handle_write(e, userID);
+                                  }
+            );
           }
-
-          break;
         }
+        break;
+      }
       default:
         break;
     }
+
+    do_async_read_from_user(userID);
   }
   else
   {

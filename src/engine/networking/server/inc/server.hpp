@@ -37,12 +37,12 @@ public:
 private:
   /// The acceptor object used to accept incoming socket connections.
   boost::asio::ip::tcp::acceptor acceptor_;
-
   std::map<api::UserID, connection_ptr> clients_;
-
   std::map<api::UserID, message> messages_;
-
   api::UserID server_id_;
+
+  void do_async_read_from_user(api::UserID userID);
+
 };
 
 } // namespace networking

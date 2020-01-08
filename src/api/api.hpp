@@ -14,6 +14,11 @@ namespace api
         UserID() = default;
         UserID(size_t id) : id_(id) {}
 
+        bool isValid()
+        {
+            return (id_ != 0);
+        }
+
         inline void operator=(const UserID& rhs)
         {
             id_ = rhs.id_;
@@ -40,6 +45,11 @@ namespace api
             return os;
         }
 
+        const std::string toString() const
+        {
+            return std::to_string(id_);
+        }
+
         template <typename Archive>
         void serialize(Archive& ar, const unsigned int version)
         {
@@ -49,6 +59,12 @@ namespace api
     private:
         size_t id_ = 0;
     };
+
+    // static auto& Networking()
+    // {
+    //     static Client client;
+    //     return client; 
+    // }
 }
 
 }
