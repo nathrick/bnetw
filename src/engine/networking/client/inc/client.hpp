@@ -16,17 +16,18 @@ namespace gsdk
 namespace networking
 {
 
-class client
+class abstract_client
 {
 public:
-    client(/*boost::asio::io_context& io_context*/);
-    ~client();
+    abstract_client();
+    virtual ~abstract_client();
 
+protected:
     bool login();
-
+    virtual void peekReceivedMessage(api::UserID senderID, const std::string & data) = 0;
     void sendBroadcastMessage(const std::string & msg);
     void sendServerMessage(const std::string & msg);
-    void sendMessage(api::UserID userID, const std::string & msg);  
+    void sendMessage(api::UserID userID, const std::string & msg);
 
     api::UserID id() const { return id_; }
 

@@ -4,44 +4,49 @@
 #include "engine/networking/connection.hpp"
 #include "engine/networking/client/inc/client.hpp"
 
+
+class sample_client : public gsdk::networking::abstract_client
+{
+  public:
+    sample_client(){}
+    virtual ~sample_client(){}
+
+    bool init()
+    {
+      if(login())
+      {
+        std::cout << "MY ID: " << id() << std::endl;
+        return true;
+      }
+      return false;
+    }
+
+    void sendWelcomeMessage()
+    {
+      sendBroadcastMessage(id().toString() + " is READY !!!");
+    }
+
+  private:
+    virtual void peekReceivedMessage(gsdk::api::UserID senderID, const std::string & msg) override
+    {
+        std::cout << "RECEIVED MESSAGE: " << msg << " from " << senderID << std::endl;
+    }
+
+};
+
 int main(int argc, char* argv[])
 {
   try
   {
-    // Check command line arguments.
-    // if (argc != 3)
-    // {
-    //   std::cerr << "Usage: client <host> <port>" << std::endl;
-    //   return 1;
-    // }
+    sample_client client;
 
-    //boost::asio::io_context io_context;
-    gsdk::networking::client client;
-
-    if(client.login())
+    if(client.init())
     {
-      char c;
-
-      do
+      while(true)
       {
-        std::cout << "Choose sth:" << std::endl;
-        std::cin >> c;
-
-        if(c == 'm')
-        {
-          client.sendBroadcastMessage( std::string("I am alive: " + client.id().toString()) );
-        }
-        else if(c == 'u')
-        {
-          size_t recv_uid;
-          std::cout << "Enter receiver user ID:\t";
-          std::cin >> recv_uid;
-
-          client.sendMessage(gsdk::api::UserID {recv_uid}, std::string("Direct msg from: " + client.id().toString()));
-        }
-
-      } while (c != 'c');
-
+        client.sendWelcomeMessage();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
     }
 
   }

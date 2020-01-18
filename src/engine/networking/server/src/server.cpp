@@ -14,6 +14,8 @@ server::server(boost::asio::io_context& io_context, unsigned short port)
     auto sID = std::hash<std::string>{}(hash_string);
     server_id_ = sID;
 
+    std::cout << "SERVER ID: " << server_id_ << std::endl;
+
     acceptor_.async_accept(new_conn->socket(), 
                            [this, new_conn](const boost::system::error_code e)
                            {
@@ -29,7 +31,7 @@ void server::handle_accept(const boost::system::error_code& e, connection_ptr co
     /* Generate UserID here as hash based on connection data */
     auto hash_string = conn->socket().remote_endpoint().address().to_string() + std::to_string(conn->socket().remote_endpoint().port()); 
     auto uID = std::hash<std::string>{}(hash_string);
-    std::cout << "Generated userID: " << uID << '\n';
+    // std::cout << "Generated userID: " << uID << '\n';
     api::UserID userID{uID};
     
     /* Add generated UserID to connected clients */
@@ -63,8 +65,6 @@ void server::handle_write(const boost::system::error_code& e, api::UserID userID
 {
   if(!e)
   {
-    std::cout << "handle_write - OK" << std::endl;
-
   }
   else
   {

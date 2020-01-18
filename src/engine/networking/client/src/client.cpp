@@ -4,24 +4,12 @@
 
 using namespace gsdk::networking;
 
-client::client()
+abstract_client::abstract_client()
         : connection_(io_context_)
 {
-    // // Resolve the host name into an IP address.
-    // boost::asio::ip::tcp::resolver resolver(io_context);
-    // boost::asio::ip::tcp::resolver::query query(host, service);
-    // boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-
-    // // Start an asynchronous connect operation.
-    // boost::asio::async_connect(connection_.socket(), endpoint_iterator,
-    //                             [this](boost::system::error_code e, boost::asio::ip::tcp::resolver::iterator)
-    //                             {
-    //                                 handle_connect(e);
-    //                             }
-    // );
 }
 
-client::~client()
+abstract_client::~abstract_client()
 {
     io_context_.stop();
     
@@ -31,17 +19,16 @@ client::~client()
     connection_.socket().close();
 }
 
-void client::run_context_thread()
+void abstract_client::run_context_thread()
 {
     while(!io_context_.stopped())
     {
         io_context_.run();
-        std::cout << ".";
     }
 }
 
 
-void client::handle_connect(const boost::system::error_code& e)
+void abstract_client::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
@@ -53,39 +40,11 @@ void client::handle_connect(const boost::system::error_code& e)
     }
 }
 
-void client::handle_read(const boost::system::error_code& e)
+void abstract_client::handle_read(const boost::system::error_code& e)
 {
     if (!e)
     {
-        switch (message_.type())
-        {
-        case MESSAGE_TYPE::UNKNOWN:
-            /* code */
-            std::cout << "Received message UNKNOWN\n";
-            break;
-        case MESSAGE_TYPE::REGISTER_USER:
-        {
-            std::istringstream iss(message_.data());
-            size_t id; iss >> id; id_ = id;
-            std::cout << "Received message REGISTER_USER, received user id: "<< id_ << '\n';
-
-            break;      
-        }
-        case MESSAGE_TYPE::TO_USER:
-        {
-            std::cout << "Received message TO_USER: " << message_.data() << '\n';
-            break;
-        }
-        case MESSAGE_TYPE::TO_ALL:
-        {
-            std::cout << "Received message TO_ALL: " << message_.data() << '\n';
-
-            break;
-        }
-        default:
-            break;
-        }
-
+        peekReceivedMessage(message_.senderID(), message_.data());
         doAsyncRead();
     }
     else
@@ -94,11 +53,10 @@ void client::handle_read(const boost::system::error_code& e)
     }
 }
 
-void client::handle_write(const boost::system::error_code& e)
+void abstract_client::handle_write(const boost::system::error_code& e)
 {
     if(!e)
     {
-        std::cout << "handle_write()\n";
     }
     else
     {
@@ -107,7 +65,7 @@ void client::handle_write(const boost::system::error_code& e)
     
 }
 
-void client::send(api::UserID userID, MESSAGE_TYPE type, const std::string & data)
+void abstract_client::send(api::UserID userID, MESSAGE_TYPE type, const std::string & data)
 {
     if( !userID.isValid() )
     {
@@ -131,8 +89,6 @@ void client::send(api::UserID userID, MESSAGE_TYPE type, const std::string & dat
     message m {type, id_, userID};
     m.setData( data );
 
-    boost::system::error_code e;
-    //connection_.write(m, e);
     connection_.async_write(m, 
                         [this](boost::system::error_code e,  std::size_t)
                         {
@@ -142,7 +98,7 @@ void client::send(api::UserID userID, MESSAGE_TYPE type, const std::string & dat
 
 }
 
-void client::doAsyncRead()
+void abstract_client::doAsyncRead()
 {
     connection_.async_read(message_, 
                             [this](boost::system::error_code e,  std::size_t)
@@ -150,11 +106,9 @@ void client::doAsyncRead()
                                 handle_read(e);
                             }
     );
-
-    std::cout << "doAsyncRead()\n";
 }
 
-bool client::login()
+bool abstract_client::login()
 {
     // Resolve the host name into an IP address.
     boost::asio::ip::tcp::resolver resolver(connection_.socket().get_io_context());
@@ -186,7 +140,7 @@ bool client::login()
             
             server_id_ = message_.senderID();
 
-            std::cout << "Login success: received message REGISTER_USER, received user id: " << id_  << '\n';
+            std::cout << "Login success, received user id: " << id_  << '\n';
         }
         else
         {
@@ -196,24 +150,24 @@ bool client::login()
     }
 
     doAsyncRead();
-    context_thread_ = boost::thread(&client::run_context_thread, this); 
+    context_thread_ = boost::thread(&abstract_client::run_context_thread, this); 
 
     return true;
 }
 
-void client::sendBroadcastMessage(const std::string & msg)
+void abstract_client::sendBroadcastMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_ALL, msg);
 }
 
-void client::sendServerMessage(const std::string & msg)
+void abstract_client::sendServerMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_SERVER, msg);
 }
 
-void client::sendMessage(api::UserID userID, const std::string & msg)
+void abstract_client::sendMessage(api::UserID userID, const std::string & msg)
 {
     assert(server_id_.isValid());
     send(userID, MESSAGE_TYPE::TO_USER, msg);

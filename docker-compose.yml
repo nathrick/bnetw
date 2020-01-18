@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+    
+    server:
+        build: ./
+        command: ./gsdk_server 8888
+        ports:
+            - 8888:8888
+
+    client:
+        build: ./
+        command: ./gsdk_client
+        network_mode: host
+        depends_on:
+            - server
