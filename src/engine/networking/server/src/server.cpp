@@ -1,4 +1,4 @@
-#include "engine/networking/server/inc/server.hpp"
+#include "server/inc/server.hpp"
 
 #include <functional>
 

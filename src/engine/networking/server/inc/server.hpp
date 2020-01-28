@@ -7,9 +7,9 @@
 #include <iostream>
 #include <map>
 
-#include "api/api.hpp"
-#include "engine/networking/messages/message.hpp"
-#include "engine/networking/connection.hpp" // Must come before boost/serialization headers.
+#include "gsdk_api.hpp"
+#include "messages/message.hpp"
+#include "connection.hpp" // Must come before boost/serialization headers.
 
 #include <boost/serialization/vector.hpp>
 #include <boost/asio/basic_socket.hpp>

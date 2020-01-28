@@ -1,15 +1,66 @@
-#include "engine/networking/client/inc/client.hpp"
-
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <iostream>
+#include <vector>
 #include <sstream>
+
+#include "gsdk_api.hpp"
+#include "connection.hpp" // Must come before boost/serialization headers.
+#include "messages/message.hpp"
+#include <boost/serialization/vector.hpp>
+#include <boost/thread/thread.hpp>
 
 using namespace gsdk::networking;
 
-abstract_client::abstract_client()
+using uID = gsdk::api::UserID;
+
+using recvMsgCallback = void(gsdk::api::Client::*)(uID, const std::string &);
+
+class gsdk::api::Client::ClientImpl
+{
+public:
+    ClientImpl();
+    ~ClientImpl();
+
+    bool login();
+    // virtual void peekReceivedMessage(uID senderID, const std::string & data) = 0;
+    void sendBroadcastMessage(const std::string & msg);
+    void sendServerMessage(const std::string & msg);
+    void sendMessage(uID userID, const std::string & msg);
+
+    uID id() const { return id_; }
+
+    void setMessageHandler(gsdk::api::Client * client) { client_ = client; }
+
+private:
+
+  static inline std::string const HOST = "localhost";
+  static inline std::string const SERVICE = "8888";
+
+  boost::asio::io_context io_context_;
+  connection connection_;
+  boost::thread context_thread_;
+  message message_;
+  uID id_;
+  uID server_id_;
+  gsdk::api::Client * client_;
+
+  void handle_connect(const boost::system::error_code& e);
+  void handle_read(const boost::system::error_code& e);
+  void handle_write(const boost::system::error_code& e);
+
+  void send(uID userID, MESSAGE_TYPE type, const std::string & data);
+  void doAsyncRead();
+  void run_context_thread();
+
+};
+
+gsdk::api::Client::ClientImpl::ClientImpl()
         : connection_(io_context_)
 {
 }
 
-abstract_client::~abstract_client()
+gsdk::api::Client::ClientImpl::~ClientImpl()
 {
     io_context_.stop();
     
@@ -19,7 +70,7 @@ abstract_client::~abstract_client()
     connection_.socket().close();
 }
 
-void abstract_client::run_context_thread()
+void gsdk::api::Client::ClientImpl::run_context_thread()
 {
     while(!io_context_.stopped())
     {
@@ -28,7 +79,7 @@ void abstract_client::run_context_thread()
 }
 
 
-void abstract_client::handle_connect(const boost::system::error_code& e)
+void gsdk::api::Client::ClientImpl::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
@@ -40,11 +91,12 @@ void abstract_client::handle_connect(const boost::system::error_code& e)
     }
 }
 
-void abstract_client::handle_read(const boost::system::error_code& e)
+void gsdk::api::Client::ClientImpl::handle_read(const boost::system::error_code& e)
 {
     if (!e)
     {
-        peekReceivedMessage(message_.senderID(), message_.data());
+        //(static_cast<gsdk::api::Client*>(this)->*rmc_)(message_.senderID(), message_.data());
+        client_->peekReceivedMessage(message_.senderID(), message_.data());
         doAsyncRead();
     }
     else
@@ -53,7 +105,7 @@ void abstract_client::handle_read(const boost::system::error_code& e)
     }
 }
 
-void abstract_client::handle_write(const boost::system::error_code& e)
+void gsdk::api::Client::ClientImpl::handle_write(const boost::system::error_code& e)
 {
     if(!e)
     {
@@ -65,7 +117,7 @@ void abstract_client::handle_write(const boost::system::error_code& e)
     
 }
 
-void abstract_client::send(api::UserID userID, MESSAGE_TYPE type, const std::string & data)
+void gsdk::api::Client::ClientImpl::send(uID userID, MESSAGE_TYPE type, const std::string & data)
 {
     if( !userID.isValid() )
     {
@@ -98,7 +150,7 @@ void abstract_client::send(api::UserID userID, MESSAGE_TYPE type, const std::str
 
 }
 
-void abstract_client::doAsyncRead()
+void gsdk::api::Client::ClientImpl::doAsyncRead()
 {
     connection_.async_read(message_, 
                             [this](boost::system::error_code e,  std::size_t)
@@ -108,7 +160,7 @@ void abstract_client::doAsyncRead()
     );
 }
 
-bool abstract_client::login()
+bool gsdk::api::Client::ClientImpl::login()
 {
     // Resolve the host name into an IP address.
     boost::asio::ip::tcp::resolver resolver(connection_.socket().get_io_context());
@@ -150,25 +202,58 @@ bool abstract_client::login()
     }
 
     doAsyncRead();
-    context_thread_ = boost::thread(&abstract_client::run_context_thread, this); 
+    context_thread_ = boost::thread(&gsdk::api::Client::ClientImpl::run_context_thread, this); 
 
     return true;
 }
 
-void abstract_client::sendBroadcastMessage(const std::string & msg)
+void gsdk::api::Client::ClientImpl::sendBroadcastMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_ALL, msg);
 }
 
-void abstract_client::sendServerMessage(const std::string & msg)
+void gsdk::api::Client::ClientImpl::sendServerMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_SERVER, msg);
 }
 
-void abstract_client::sendMessage(api::UserID userID, const std::string & msg)
+void gsdk::api::Client::ClientImpl::sendMessage(uID userID, const std::string & msg)
 {
     assert(server_id_.isValid());
     send(userID, MESSAGE_TYPE::TO_USER, msg);
+}
+
+gsdk::api::Client::Client()
+    : pimpl_(std::make_unique<gsdk::api::Client::ClientImpl>())
+{
+    pimpl_->setMessageHandler(this);
+}
+
+gsdk::api::Client::~Client() = default;
+
+bool gsdk::api::Client::login()
+{
+    return pimpl_->login();
+}
+
+void gsdk::api::Client::sendBroadcastMessage(const std::string & msg)
+{
+    pimpl_->sendBroadcastMessage(msg);
+}
+
+void gsdk::api::Client::sendServerMessage(const std::string & msg)
+{
+    pimpl_->sendServerMessage(msg);
+}
+
+void gsdk::api::Client::sendMessage(api::UserID userID, const std::string & msg)
+{
+    pimpl_->sendMessage(userID, msg);
+}
+
+uID gsdk::api::Client::id() const
+{
+    return pimpl_->id();
 }

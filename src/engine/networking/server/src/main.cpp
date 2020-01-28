@@ -1,8 +1,8 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "engine/networking/connection.hpp"
-#include "engine/networking/server/inc/server.hpp"
+#include "connection.hpp"
+#include "server/inc/server.hpp"
 
 int main(int argc, char* argv[])
 {

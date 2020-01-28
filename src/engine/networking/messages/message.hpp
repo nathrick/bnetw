@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include <api/api.hpp>
+#include "gsdk_api.hpp"
 
 namespace gsdk
 {

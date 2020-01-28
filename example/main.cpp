@@ -1,11 +1,10 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "engine/networking/connection.hpp"
-#include "engine/networking/client/inc/client.hpp"
+#include <gsdk_api.hpp>
 
 
-class sample_client : public gsdk::networking::abstract_client
+class sample_client : public gsdk::api::Client
 {
   public:
     sample_client(){}

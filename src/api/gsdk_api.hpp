@@ -1,7 +1,9 @@
-#ifndef API_HPP
-#define API_HPP
+#ifndef GSDK_API_HPP
+#define GSDK_API_HPP
 
 #include <iostream>
+#include <string>
+#include <memory>
 
 namespace gsdk
 {
@@ -60,6 +62,25 @@ namespace api
         size_t id_ = 0;
     };
 
+    class Client
+    {
+    public:
+        Client();
+        virtual ~Client();
+    
+        bool login();
+        virtual void peekReceivedMessage(api::UserID senderID, const std::string & data) = 0;
+
+        void sendBroadcastMessage(const std::string & msg);
+        void sendServerMessage(const std::string & msg);
+        void sendMessage(api::UserID userID, const std::string & msg);
+        api::UserID id() const;
+
+    private:
+        class ClientImpl;
+        std::unique_ptr<ClientImpl> pimpl_;
+    };
+
     // static auto& Networking()
     // {
     //     static Client client;
@@ -69,4 +90,4 @@ namespace api
 
 }
 
-#endif // API_HPP
+#endif // GSDK_API_HPP
