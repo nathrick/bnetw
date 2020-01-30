@@ -12,6 +12,7 @@ GSDK is game sdk.
 docker build -t gsdk .  # build gsdk image
 docker run -it gsdk     # run gsdk interactive
 
+docker-compose build
 docker-compose up
 docker-compose up --scale example_client=5
 docker-compose down

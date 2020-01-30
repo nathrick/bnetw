@@ -199,7 +199,7 @@ private:
   std::vector<char> inbound_data_;
 };
 
-typedef boost::shared_ptr<connection> connection_ptr;
+using connection_ptr = boost::shared_ptr<connection>;
 
 } // namespace networking
 

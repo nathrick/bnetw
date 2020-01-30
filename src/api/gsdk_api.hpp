@@ -80,12 +80,6 @@ namespace api
         class ClientImpl;
         std::unique_ptr<ClientImpl> pimpl_;
     };
-
-    // static auto& Networking()
-    // {
-    //     static Client client;
-    //     return client; 
-    // }
 }
 
 }

@@ -19,18 +19,15 @@ using recvMsgCallback = void(gsdk::api::Client::*)(uID, const std::string &);
 class gsdk::api::Client::ClientImpl
 {
 public:
-    ClientImpl();
+    ClientImpl(gsdk::api::Client * client);
     ~ClientImpl();
 
     bool login();
-    // virtual void peekReceivedMessage(uID senderID, const std::string & data) = 0;
     void sendBroadcastMessage(const std::string & msg);
     void sendServerMessage(const std::string & msg);
     void sendMessage(uID userID, const std::string & msg);
 
     uID id() const { return id_; }
-
-    void setMessageHandler(gsdk::api::Client * client) { client_ = client; }
 
 private:
 
@@ -55,8 +52,9 @@ private:
 
 };
 
-gsdk::api::Client::ClientImpl::ClientImpl()
+gsdk::api::Client::ClientImpl::ClientImpl(gsdk::api::Client * client)
         : connection_(io_context_)
+        , client_(client)
 {
 }
 
@@ -95,7 +93,6 @@ void gsdk::api::Client::ClientImpl::handle_read(const boost::system::error_code&
 {
     if (!e)
     {
-        //(static_cast<gsdk::api::Client*>(this)->*rmc_)(message_.senderID(), message_.data());
         client_->peekReceivedMessage(message_.senderID(), message_.data());
         doAsyncRead();
     }
@@ -226,9 +223,8 @@ void gsdk::api::Client::ClientImpl::sendMessage(uID userID, const std::string & 
 }
 
 gsdk::api::Client::Client()
-    : pimpl_(std::make_unique<gsdk::api::Client::ClientImpl>())
+    : pimpl_(std::make_unique<gsdk::api::Client::ClientImpl>(this))
 {
-    pimpl_->setMessageHandler(this);
 }
 
 gsdk::api::Client::~Client() = default;
