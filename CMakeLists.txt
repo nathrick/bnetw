@@ -14,11 +14,18 @@ if(Boost_FOUND)
   link_directories(${Boost_LIBRARY_DIRS})
 endif(Boost_FOUND)
 
-if(EXAMPLE)
-add_subdirectory(example)
-else()
 add_subdirectory(src)
-endif()
+
+add_custom_target(example
+    COMMAND echo [----] Building example app
+    USES_TERMINAL
+    COMMAND cd ${PROJECT_SOURCE_DIR}/example 
+            && mkdir -p build 
+            && cd build
+            && cmake ..
+            && make
+    )
+
 
 
 
