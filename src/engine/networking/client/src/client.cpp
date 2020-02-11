@@ -4,22 +4,22 @@
 #include <vector>
 #include <sstream>
 
-#include "gsdk_api.hpp"
+#include "bnetw_api.hpp"
 #include "connection.hpp" // Must come before boost/serialization headers.
 #include "messages/message.hpp"
 #include <boost/serialization/vector.hpp>
 #include <boost/thread/thread.hpp>
 
-using namespace gsdk::networking;
+using namespace bnetw::networking;
 
-using uID = gsdk::api::UserID;
+using uID = bnetw::api::UserID;
 
-using recvMsgCallback = void(gsdk::api::Client::*)(uID, const std::string &);
+using recvMsgCallback = void(bnetw::api::Client::*)(uID, const std::string &);
 
-class gsdk::api::Client::ClientImpl
+class bnetw::api::Client::ClientImpl
 {
 public:
-    ClientImpl(gsdk::api::Client * client);
+    ClientImpl(bnetw::api::Client * client);
     ~ClientImpl();
 
     bool login();
@@ -40,7 +40,7 @@ private:
   message message_;
   uID id_;
   uID server_id_;
-  gsdk::api::Client * client_;
+  bnetw::api::Client * client_;
 
   void handle_connect(const boost::system::error_code& e);
   void handle_read(const boost::system::error_code& e);
@@ -52,13 +52,13 @@ private:
 
 };
 
-gsdk::api::Client::ClientImpl::ClientImpl(gsdk::api::Client * client)
+bnetw::api::Client::ClientImpl::ClientImpl(bnetw::api::Client * client)
         : connection_(io_context_)
         , client_(client)
 {
 }
 
-gsdk::api::Client::ClientImpl::~ClientImpl()
+bnetw::api::Client::ClientImpl::~ClientImpl()
 {
     io_context_.stop();
     
@@ -68,7 +68,7 @@ gsdk::api::Client::ClientImpl::~ClientImpl()
     connection_.socket().close();
 }
 
-void gsdk::api::Client::ClientImpl::run_context_thread()
+void bnetw::api::Client::ClientImpl::run_context_thread()
 {
     while(!io_context_.stopped())
     {
@@ -77,7 +77,7 @@ void gsdk::api::Client::ClientImpl::run_context_thread()
 }
 
 
-void gsdk::api::Client::ClientImpl::handle_connect(const boost::system::error_code& e)
+void bnetw::api::Client::ClientImpl::handle_connect(const boost::system::error_code& e)
 {
     if (!e)
     {
@@ -89,7 +89,7 @@ void gsdk::api::Client::ClientImpl::handle_connect(const boost::system::error_co
     }
 }
 
-void gsdk::api::Client::ClientImpl::handle_read(const boost::system::error_code& e)
+void bnetw::api::Client::ClientImpl::handle_read(const boost::system::error_code& e)
 {
     if (!e)
     {
@@ -102,7 +102,7 @@ void gsdk::api::Client::ClientImpl::handle_read(const boost::system::error_code&
     }
 }
 
-void gsdk::api::Client::ClientImpl::handle_write(const boost::system::error_code& e)
+void bnetw::api::Client::ClientImpl::handle_write(const boost::system::error_code& e)
 {
     if(!e)
     {
@@ -114,7 +114,7 @@ void gsdk::api::Client::ClientImpl::handle_write(const boost::system::error_code
     
 }
 
-void gsdk::api::Client::ClientImpl::send(uID userID, MESSAGE_TYPE type, const std::string & data)
+void bnetw::api::Client::ClientImpl::send(uID userID, MESSAGE_TYPE type, const std::string & data)
 {
     if( !userID.isValid() )
     {
@@ -147,7 +147,7 @@ void gsdk::api::Client::ClientImpl::send(uID userID, MESSAGE_TYPE type, const st
 
 }
 
-void gsdk::api::Client::ClientImpl::doAsyncRead()
+void bnetw::api::Client::ClientImpl::doAsyncRead()
 {
     connection_.async_read(message_, 
                             [this](boost::system::error_code e,  std::size_t)
@@ -157,7 +157,7 @@ void gsdk::api::Client::ClientImpl::doAsyncRead()
     );
 }
 
-bool gsdk::api::Client::ClientImpl::login()
+bool bnetw::api::Client::ClientImpl::login()
 {
     // Resolve the host name into an IP address.
     boost::asio::ip::tcp::resolver resolver(connection_.socket().get_io_context());
@@ -199,57 +199,57 @@ bool gsdk::api::Client::ClientImpl::login()
     }
 
     doAsyncRead();
-    context_thread_ = boost::thread(&gsdk::api::Client::ClientImpl::run_context_thread, this); 
+    context_thread_ = boost::thread(&bnetw::api::Client::ClientImpl::run_context_thread, this); 
 
     return true;
 }
 
-void gsdk::api::Client::ClientImpl::sendBroadcastMessage(const std::string & msg)
+void bnetw::api::Client::ClientImpl::sendBroadcastMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_ALL, msg);
 }
 
-void gsdk::api::Client::ClientImpl::sendServerMessage(const std::string & msg)
+void bnetw::api::Client::ClientImpl::sendServerMessage(const std::string & msg)
 {
     assert(server_id_.isValid());
     send(server_id_, MESSAGE_TYPE::TO_SERVER, msg);
 }
 
-void gsdk::api::Client::ClientImpl::sendMessage(uID userID, const std::string & msg)
+void bnetw::api::Client::ClientImpl::sendMessage(uID userID, const std::string & msg)
 {
     assert(server_id_.isValid());
     send(userID, MESSAGE_TYPE::TO_USER, msg);
 }
 
-gsdk::api::Client::Client()
-    : pimpl_(std::make_unique<gsdk::api::Client::ClientImpl>(this))
+bnetw::api::Client::Client()
+    : pimpl_(std::make_unique<bnetw::api::Client::ClientImpl>(this))
 {
 }
 
-gsdk::api::Client::~Client() = default;
+bnetw::api::Client::~Client() = default;
 
-bool gsdk::api::Client::login()
+bool bnetw::api::Client::login()
 {
     return pimpl_->login();
 }
 
-void gsdk::api::Client::sendBroadcastMessage(const std::string & msg)
+void bnetw::api::Client::sendBroadcastMessage(const std::string & msg)
 {
     pimpl_->sendBroadcastMessage(msg);
 }
 
-void gsdk::api::Client::sendServerMessage(const std::string & msg)
+void bnetw::api::Client::sendServerMessage(const std::string & msg)
 {
     pimpl_->sendServerMessage(msg);
 }
 
-void gsdk::api::Client::sendMessage(api::UserID userID, const std::string & msg)
+void bnetw::api::Client::sendMessage(api::UserID userID, const std::string & msg)
 {
     pimpl_->sendMessage(userID, msg);
 }
 
-uID gsdk::api::Client::id() const
+uID bnetw::api::Client::id() const
 {
     return pimpl_->id();
 }

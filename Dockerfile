@@ -1,6 +1,6 @@
 FROM ubuntu:latest as build
 
-LABEL description="Build container - gsdk server"
+LABEL description="Build container - bnetw"
 
 RUN apt-get -qq update && apt-get -qqy install build-essential cmake curl file gcc g++ git unzip wget
 
@@ -15,14 +15,14 @@ RUN cd /home && wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost
   && cd /home \
   && rm -rf boost_1_67_0
 
-COPY src /gsdk/src
-COPY example /gsdk/example
-COPY CMakeLists.txt /gsdk
-COPY docker-compose.yml /gsdk
-COPY Dockerfile /gsdk
-COPY README.md /gsdk
+COPY src /bnetw/src
+COPY example /bnetw/example
+COPY CMakeLists.txt /bnetw
+COPY docker-compose.yml /bnetw
+COPY Dockerfile /bnetw
+COPY README.md /bnetw
 
-WORKDIR /gsdk
+WORKDIR /bnetw
 RUN mkdir -p build \
     && cd build \
     && cmake .. \

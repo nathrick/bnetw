@@ -1,11 +1,11 @@
-#ifndef GSDK_API_HPP
-#define GSDK_API_HPP
+#ifndef BNETW_API_HPP
+#define BNETW_API_HPP
 
 #include <iostream>
 #include <string>
 #include <memory>
 
-namespace gsdk
+namespace bnetw
 {
 
 namespace api
@@ -84,4 +84,4 @@ namespace api
 
 }
 
-#endif // GSDK_API_HPP
+#endif // BNETW_API_HPP

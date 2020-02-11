@@ -6,8 +6,8 @@ bnetw is network client-server library based on boost::asio.
 ## Useful commands
 
 ```bash
-docker build -t gsdk .  # build gsdk image
-docker run -it gsdk     # run gsdk interactive
+docker build -t bnetw .  # build bnetw image
+docker run -it bnetw     # run bnetw interactive
 
 docker-compose build
 docker-compose up

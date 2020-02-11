@@ -7,14 +7,14 @@
 #include <iostream>
 #include <map>
 
-#include "gsdk_api.hpp"
+#include "bnetw_api.hpp"
 #include "messages/message.hpp"
 #include "connection.hpp" // Must come before boost/serialization headers.
 
 #include <boost/serialization/vector.hpp>
 #include <boost/asio/basic_socket.hpp>
 
-namespace gsdk
+namespace bnetw
 {
 
 namespace networking
@@ -47,6 +47,6 @@ private:
 
 } // namespace networking
 
-} // namespace gsdk
+} // namespace bnetw
 
 #endif // SERVER_HPP

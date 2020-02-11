@@ -3,9 +3,9 @@
 
 #include <iostream>
 
-#include "gsdk_api.hpp"
+#include "bnetw_api.hpp"
 
-namespace gsdk
+namespace bnetw
 {
 
 namespace networking
@@ -61,7 +61,7 @@ private:
 
 } // namespace networking
 
-} // namespace gsdk
+} // namespace bnetw
 
 
 #endif // MESSAGE_HPP

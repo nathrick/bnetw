@@ -12,7 +12,7 @@
 #include <sstream>
 #include <vector>
 
-namespace gsdk
+namespace bnetw
 {
 
 namespace networking
@@ -203,6 +203,6 @@ using connection_ptr = boost::shared_ptr<connection>;
 
 } // namespace networking
 
-} // namespace gsdk
+} // namespace bnetw
 
 #endif // CONNECTION_HPP

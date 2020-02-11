@@ -1,10 +1,10 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <gsdk_api.hpp>
+#include <bnetw_api.hpp>
 
 
-class sample_client : public gsdk::api::Client
+class sample_client : public bnetw::api::Client
 {
   public:
     sample_client(){}
@@ -26,7 +26,7 @@ class sample_client : public gsdk::api::Client
     }
 
   private:
-    virtual void peekReceivedMessage(gsdk::api::UserID senderID, const std::string & msg) override
+    virtual void peekReceivedMessage(bnetw::api::UserID senderID, const std::string & msg) override
     {
         std::cout << "RECEIVED MESSAGE: " << msg << " from " << senderID << std::endl;
     }

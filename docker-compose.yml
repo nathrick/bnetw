@@ -4,13 +4,13 @@ services:
     
     server:
         build: ./
-        command: ./bin/gsdk_server 8888
+        command: ./bin/bnetw_server 8888
         ports:
             - 8888:8888
 
     example_client:
         build: ./
-        command: ./example/bin/gsdk_example
+        command: ./example/bin/bnetw_example
         network_mode: host
         depends_on:
             - server
