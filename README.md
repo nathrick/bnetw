@@ -1,10 +1,7 @@
-# GSDK
+# bnetw
 
-GSDK is game sdk.
+bnetw is network client-server library based on boost::asio.
 
-## TBD
-
-* First part is to create asynchronous game server. boost::asio is planned to be used. 
 
 ## Useful commands
 
