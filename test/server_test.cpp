@@ -7,4 +7,6 @@ using namespace bnetw::networking;
 
 TEST(server_test, test1)
 {
+    unsigned short port_num = 888;
+    server s(port_num);
 }
