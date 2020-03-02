@@ -16,9 +16,8 @@ int main(int argc, char* argv[])
       }
       unsigned short port = boost::lexical_cast<unsigned short>(argv[1]);
 
-      boost::asio::io_context io_context;
-      bnetw::networking::server server(io_context, port);
-      io_context.run();
+      bnetw::networking::server server(port);
+      server.start();
     }
     catch (std::exception& e)
     {

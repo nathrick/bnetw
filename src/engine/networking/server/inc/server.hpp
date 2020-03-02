@@ -13,6 +13,7 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/asio/basic_socket.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace bnetw
 {
@@ -23,19 +24,16 @@ namespace networking
 class server
 {
 public:
-    server(boost::asio::io_context& io_context, unsigned short port);
-
-    /// Handle completion of a accept operation.
+    server(unsigned short port);
+    ~server();
+    void start();
     void handle_accept(const boost::system::error_code& e, connection_ptr conn);
-
-    /// Handle completion of a write operation.
     void handle_write(const boost::system::error_code& e, api::UserID userID);
-
-    /// Handle completion of a read operation.
     void handle_read(const boost::system::error_code& e, api::UserID userID);
 
 private:
   /// The acceptor object used to accept incoming socket connections.
+  boost::asio::io_context io_context_;
   boost::asio::ip::tcp::acceptor acceptor_;
   std::map<api::UserID, connection_ptr> clients_;
   std::map<api::UserID, message> messages_;

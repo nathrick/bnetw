@@ -14,7 +14,11 @@ if(Boost_FOUND)
   link_directories(${Boost_LIBRARY_DIRS})
 endif(Boost_FOUND)
 
+if(BUILD_TEST)
+add_subdirectory(test)
+else()
 add_subdirectory(src)
+endif()
 
 add_custom_target(example
     COMMAND echo [----] Building example app

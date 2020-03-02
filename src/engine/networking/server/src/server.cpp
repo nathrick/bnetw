@@ -4,8 +4,18 @@
 
 using namespace bnetw::networking;
 
-server::server(boost::asio::io_context& io_context, unsigned short port)
-    : acceptor_(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+server::server(unsigned short port)
+    : acceptor_(io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+{
+}
+
+server::~server()
+{
+  io_context_.stop();
+  acceptor_.close();
+}
+
+void server::start()
 {
     // Start an accept operation for a new connection.
     auto new_conn = boost::make_shared<connection>(acceptor_.get_executor().context());
@@ -22,6 +32,8 @@ server::server(boost::asio::io_context& io_context, unsigned short port)
                              handle_accept(e, new_conn);
                            }
     );
+
+    io_context_.run();
 }
 
 void server::handle_accept(const boost::system::error_code& e, connection_ptr conn)
