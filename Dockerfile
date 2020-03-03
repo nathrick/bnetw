@@ -2,9 +2,11 @@ FROM ubuntu:latest as build
 
 LABEL description="Build container - bnetw"
 
-RUN apt-get -qq update && apt-get -qqy install build-essential cmake curl file gcc g++ git unzip wget
+RUN apt-get -qq update && apt-get -qqy install build-essential cmake curl file gcc g++ git unzip wget googletest
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
+
+ARG TEST=OFF
 
 RUN cd /home && wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz \
   && tar xfz boost_1_67_0.tar.gz \
@@ -15,16 +17,29 @@ RUN cd /home && wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost
   && cd /home \
   && rm -rf boost_1_67_0
 
+RUN cd /usr/src/googletest ; cmake -DBUILD_SHARED_LIBS=ON . ; make 
+RUN mv /usr/src/googletest/googlemock/*.so /usr/lib/; mv /usr/src/googletest/googlemock/gtest/*.so /usr/lib/
+
 COPY src /bnetw/src
 COPY example /bnetw/example
+COPY test /bnetw/test
 COPY CMakeLists.txt /bnetw
 COPY docker-compose.yml /bnetw
 COPY Dockerfile /bnetw
 COPY README.md /bnetw
 
 WORKDIR /bnetw
-RUN mkdir -p build \
+
+RUN if [ "$TEST" = "ON" ] ; then \
+    mkdir -p build \
+    && cd build \
+    && cmake -DBUILD_TEST=ON .. \
+    && make \
+    && ../bin/bnetw_test; \
+else \
+    mkdir -p build \
     && cd build \
     && cmake .. \
     && make install \
-    && make example
+    && make example; \ 
+fi
