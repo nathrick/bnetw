@@ -2,7 +2,7 @@ FROM ubuntu:latest as build
 
 LABEL description="Build container - bnetw"
 
-RUN apt-get -qq update && apt-get -qqy install build-essential cmake curl file gcc g++ git unzip wget googletest
+RUN apt-get -qq update && apt-get -qqy install build-essential cmake curl file gcc g++ git unzip wget googletest python-pip
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 
@@ -16,6 +16,8 @@ RUN cd /home && wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost
   && ./b2 install \
   && cd /home \
   && rm -rf boost_1_67_0
+
+RUN pip install gcovr
 
 RUN cd /usr/src/googletest ; cmake -DBUILD_SHARED_LIBS=ON . ; make 
 RUN mv /usr/src/googletest/googlemock/*.so /usr/lib/; mv /usr/src/googletest/googlemock/gtest/*.so /usr/lib/
@@ -35,7 +37,8 @@ RUN if [ "$TEST" = "ON" ] ; then \
     && cd build \
     && cmake -DBUILD_TEST=ON .. \
     && make \
-    && ../bin/bnetw_test; \
+    && ../bin/bnetw_test \
+    && gcovr -r ../ . -e ".*\.hpp" -e ".*/test/.*"; \
 else \
     mkdir -p build \
     && cd build \
