@@ -32,17 +32,20 @@ COPY README.md /bnetw
 
 WORKDIR /bnetw
 
+RUN mkdir -p build \
+  && cd build \
+  && cmake .. \
+  && make install \
+  && make example
+
 RUN if [ "$TEST" = "ON" ] ; then \
-    mkdir -p build \
-    && cd build \
-    && cmake -DBUILD_TEST=ON .. \
-    && make \
-    && ../bin/bnetw_test \
-    && gcovr -r ../ . -e ".*\.hpp" -e ".*/test/.*"; \
-else \
-    mkdir -p build \
-    && cd build \
-    && cmake .. \
-    && make install \
-    && make example; \ 
-fi
+  cd /bnetw/test/ \
+  && mkdir -p build \
+  && cd build \
+  && cmake -DBUILD_TEST=ON ../.. \
+  && make \
+  && ../../bin/bnetw_test; \
+  # && gcovr -r ../../ -e ".*/test/.*"; \ 
+  # && gcovr -r ../../ -e ".*/test/.*" --html --html-details -o coverage.html; \
+  # && gcovr -r ../ . -e ".*\.hpp" -e ".*/test/.*"; \
+  fi

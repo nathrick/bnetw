@@ -1,9 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <map>
 
@@ -14,6 +11,9 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/asio/basic_socket.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace bnetw
 {
@@ -24,23 +24,22 @@ namespace networking
 class server
 {
 public:
-    server(unsigned short port);
-    ~server();
-    void start();
-    void handle_accept(const boost::system::error_code& e, connection_ptr conn);
-    void handle_write(const boost::system::error_code& e, api::UserID userID);
-    void handle_read(const boost::system::error_code& e, api::UserID userID);
+  server(unsigned short port);
+  ~server();
+  void start();
+  void handle_accept(const boost::system::error_code &e, connection_ptr<boost::asio::ip::tcp::socket> conn);
+  void handle_write(const boost::system::error_code &e, api::UserID userID);
+  void handle_read(const boost::system::error_code &e, api::UserID userID);
 
 private:
   /// The acceptor object used to accept incoming socket connections.
   boost::asio::io_context io_context_;
   boost::asio::ip::tcp::acceptor acceptor_;
-  std::map<api::UserID, connection_ptr> clients_;
+  std::map<api::UserID, connection_ptr<boost::asio::ip::tcp::socket>> clients_;
   std::map<api::UserID, message> messages_;
   api::UserID server_id_;
 
   void do_async_read_from_user(api::UserID userID);
-
 };
 
 } // namespace networking

@@ -18,21 +18,22 @@ namespace bnetw
 namespace networking
 {
 
+template <typename S>
 class connection
 {
 public:
-  connection(boost::asio::io_service& io_service)
-    : socket_(io_service)
+  connection(boost::asio::io_service &io_service)
+      : socket_(io_service)
   {
   }
 
-  boost::asio::ip::tcp::socket& socket()
+  S &socket()
   {
     return socket_;
   }
 
   template <typename T, typename Handler>
-  void async_write(const T& t, Handler handler)
+  void async_write(const T &t, Handler handler)
   {
     std::ostringstream archive_stream;
     boost::archive::text_oarchive archive(archive_stream);
@@ -44,7 +45,7 @@ public:
     if (!header_stream || header_stream.str().size() != header_length)
     {
       boost::system::error_code error(boost::asio::error::invalid_argument);
-      boost::asio::post(socket_.get_io_service(), [handler, error]{ handler(error, 0); });
+      boost::asio::post(socket_.get_io_service(), [handler, error] { handler(error, 0); });
       return;
     }
     outbound_header_ = header_stream.str();
@@ -56,7 +57,7 @@ public:
   }
 
   template <typename T>
-  void write(const T& t, boost::system::error_code& ec)
+  void write(const T &t, boost::system::error_code &ec)
   {
     std::ostringstream archive_stream;
     boost::archive::text_oarchive archive(archive_stream);
@@ -79,18 +80,16 @@ public:
   }
 
   template <typename T, typename Handler>
-  void async_read(T& t, Handler handler)
+  void async_read(T &t, Handler handler)
   {
     boost::asio::async_read(socket_, boost::asio::buffer(inbound_header_),
-                            [this, &t, handler](boost::system::error_code e, std::size_t)
-                            {
+                            [this, &t, handler](boost::system::error_code e, std::size_t) {
                               handle_read_header(e, t, handler);
-                            }
-    );
+                            });
   }
 
   template <typename T, typename Handler>
-  void handle_read_header(const boost::system::error_code& e, T& t, Handler handler)
+  void handle_read_header(const boost::system::error_code &e, T &t, Handler handler)
   {
     if (e)
     {
@@ -108,17 +107,15 @@ public:
       }
 
       inbound_data_.resize(inbound_data_size);
-      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_), 
-                              [this, &t, handler](boost::system::error_code e, std::size_t)
-                              {
+      boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_),
+                              [this, &t, handler](boost::system::error_code e, std::size_t) {
                                 handle_read_data(e, t, handler);
-                              }  
-      );
+                              });
     }
   }
 
   template <typename T, typename Handler>
-  void handle_read_data(const boost::system::error_code& e, T& t, Handler handler)
+  void handle_read_data(const boost::system::error_code &e, T &t, Handler handler)
   {
     if (e)
     {
@@ -133,7 +130,7 @@ public:
         boost::archive::text_iarchive archive(archive_stream);
         archive >> t;
       }
-      catch (std::exception& e)
+      catch (std::exception &e)
       {
         boost::system::error_code error(boost::asio::error::invalid_argument);
         handler(error, 0);
@@ -145,11 +142,11 @@ public:
   }
 
   template <typename T>
-  void read(T& t, boost::system::error_code& ec)
+  void read(T &t, boost::system::error_code &ec)
   {
     boost::asio::read(socket_, boost::asio::buffer(inbound_header_), ec);
-    
-    if(ec)
+
+    if (ec)
     {
       return;
     }
@@ -166,11 +163,11 @@ public:
       inbound_data_.resize(inbound_data_size);
       boost::asio::read(socket_, boost::asio::buffer(inbound_data_), ec);
 
-      if(ec)
+      if (ec)
       {
         return;
       }
-      
+
       try
       {
         std::string archive_data(&inbound_data_[0], inbound_data_.size());
@@ -178,19 +175,21 @@ public:
         boost::archive::text_iarchive archive(archive_stream);
         archive >> t;
       }
-      catch (std::exception& e)
+      catch (std::exception &e)
       {
         ec = boost::asio::error::invalid_argument;
         return;
       }
-
     }
   }
 
 private:
-  boost::asio::ip::tcp::socket socket_;
+  S socket_;
 
-  enum { header_length = 8 };
+  enum
+  {
+    header_length = 8
+  };
 
   std::string outbound_header_;
   std::string outbound_data_;
@@ -199,7 +198,8 @@ private:
   std::vector<char> inbound_data_;
 };
 
-using connection_ptr = boost::shared_ptr<connection>;
+template <typename S>
+using connection_ptr = boost::shared_ptr<connection<S>>;
 
 } // namespace networking
 
