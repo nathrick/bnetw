@@ -88,6 +88,12 @@ void server::do_async_read_from_user(api::UserID userID)
                    });
 }
 
+void server::remove_client(api::UserID userID)
+{
+  clients_.erase(userID);
+  messages_.erase(userID);
+}
+
 void server::handle_read(const boost::system::error_code &e, api::UserID userID)
 {
   if (!e)
@@ -148,6 +154,15 @@ void server::handle_read(const boost::system::error_code &e, api::UserID userID)
   }
   else
   {
-    std::cerr << "handle_read - error:  " << e.message() << std::endl;
+    if (e.value() == ENOENT)
+    {
+      std::cout << "Client " << userID << " disconnected, removing..." << std::endl;
+      remove_client(userID);
+    }
+    else
+    {
+      std::cerr << "handle_read - value: " << e.value() << ", error:  " << e.message() << std::endl;
+    }
+    
   }
 }

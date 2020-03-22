@@ -44,8 +44,6 @@ RUN if [ "$TEST" = "ON" ] ; then \
   && cd build \
   && cmake -DBUILD_TEST=ON ../.. \
   && make \
-  && ../../bin/bnetw_test; \
-  # && gcovr -r ../../ -e ".*/test/.*"; \ 
-  # && gcovr -r ../../ -e ".*/test/.*" --html --html-details -o coverage.html; \
-  # && gcovr -r ../ . -e ".*\.hpp" -e ".*/test/.*"; \
+  && ../../bin/bnetw_test \
+  && gcovr -s -r ../../ --filter ../../src/; \ 
   fi

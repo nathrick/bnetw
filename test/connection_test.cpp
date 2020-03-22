@@ -27,28 +27,13 @@ protected:
     boost::asio::io_context io_context_;
 };
 
-// TEST_F(connection_test, SimpleAsyncWrite)
-// {
-//     //std::string test_data = "Asia";
-//     wd_ = "Asia";
-
-//     test_connection_->async_write(wd_, [](boost::system::error_code e, std::size_t) { std::cout << "SimpleAsyncWrite: async_write - " << e.message() << std::endl; });
-
-//     io_context_.run();
-// }
-
-// TEST_F(connection_test, EmptyDataAsyncWrite)
-// {
-//     std::string test_data = "";
-
-//     test_connection_->async_write(test_data, [](boost::system::error_code e, std::size_t) { std::cout << "EmptyDataAsyncWrite: async_write - " << e.message() << std::endl; });
-// }
+struct DummyRead {};
 
 TEST_F(connection_test, SimpleAsyncWriteRead)
 {
     auto conn1 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
     auto conn2 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
-    std::string written_data = "Asia";
+    std::string written_data = "TEST";
     std::string read_data;
 
     boost::asio::local::connect_pair(conn1->socket(), conn2->socket());
@@ -78,12 +63,12 @@ TEST_F(connection_test, EmptyAsyncWriteRead)
     ASSERT_STREQ(written_data.c_str(), read_data.c_str());
 }
 
-TEST_F(connection_test, InvalidTargetTypeAsyncWriteRead)
+TEST_F(connection_test, DifferentTargetTypeAsyncWriteRead)
 {
     auto conn1 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
     auto conn2 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
-    std::string written_data = "";
-    int read_data;
+    std::string written_data = "TEST";
+    std::size_t read_data;
 
     boost::asio::local::connect_pair(conn1->socket(), conn2->socket());
 
@@ -91,13 +76,15 @@ TEST_F(connection_test, InvalidTargetTypeAsyncWriteRead)
     conn2->async_write(written_data, [](boost::system::error_code e, std::size_t) { std::cout << "SimpleAsyncWriteRead: async_write - " << e.message() << std::endl; });
 
     io_context_.run();
+
+    ASSERT_EQ(written_data.size(), read_data);
 }
 
 TEST_F(connection_test, SimpleWriteRead)
 {
     auto conn1 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
     auto conn2 = boost::make_shared<connection<boost::asio::local::stream_protocol::socket>>(io_context_);
-    std::string written_data = "Asia";
+    std::string written_data = "TEST";
     std::string read_data;
     boost::system::error_code e;
     boost::thread read_thread;

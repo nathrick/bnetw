@@ -26,6 +26,7 @@ public:
     void sendBroadcastMessage(const std::string &msg);
     void sendServerMessage(const std::string &msg);
     void sendMessage(uID userID, const std::string &msg);
+    void disconnect();
 
     uID id() const { return id_; }
 
@@ -57,12 +58,10 @@ bnetw::api::Client::ClientImpl::ClientImpl(bnetw::api::Client *client)
 
 bnetw::api::Client::ClientImpl::~ClientImpl()
 {
-    io_context_.stop();
-
     if (context_thread_.joinable())
         context_thread_.join();
 
-    connection_.socket().close();
+    io_context_.stop();
 }
 
 void bnetw::api::Client::ClientImpl::run_context_thread()
@@ -94,7 +93,18 @@ void bnetw::api::Client::ClientImpl::handle_read(const boost::system::error_code
     }
     else
     {
-        std::cerr << "handle_read - error:  " << e.message() << std::endl;
+        if (e.value() == ENOENT)
+        {
+            std::cout << "Server " << server_id_ << " disconnected..." << std::endl;
+        }
+        else if(e.value() == ECANCELED)
+        {
+            std::cout << "Disconnected!" << std::endl;
+        }
+        else
+        {
+            std::cerr << "handle_read - error:  " << e.message() << std::endl;
+        }
     }
 }
 
@@ -214,6 +224,13 @@ void bnetw::api::Client::ClientImpl::sendMessage(uID userID, const std::string &
     send(userID, MESSAGE_TYPE::TO_USER, msg);
 }
 
+void bnetw::api::Client::ClientImpl::disconnect()
+{
+    boost::system::error_code e;
+    connection_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, e);
+    connection_.socket().close();
+}
+
 bnetw::api::Client::Client()
     : pimpl_(std::make_unique<bnetw::api::Client::ClientImpl>(this))
 {
@@ -239,6 +256,11 @@ void bnetw::api::Client::sendServerMessage(const std::string &msg)
 void bnetw::api::Client::sendMessage(api::UserID userID, const std::string &msg)
 {
     pimpl_->sendMessage(userID, msg);
+}
+
+void bnetw::api::Client::disconnect()
+{
+    pimpl_->disconnect();
 }
 
 uID bnetw::api::Client::id() const

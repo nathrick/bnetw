@@ -39,11 +39,15 @@ int main(int argc, char *argv[])
 
     if (client.init())
     {
-      while (true)
+      int cnt = 5;
+      while (cnt > 0)
       {
         client.sendWelcomeMessage();
         std::this_thread::sleep_for(std::chrono::seconds(1));
+        cnt--;
       }
+
+      client.disconnect();
     }
   }
   catch (std::exception &e)

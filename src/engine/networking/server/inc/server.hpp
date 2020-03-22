@@ -40,6 +40,7 @@ private:
   api::UserID server_id_;
 
   void do_async_read_from_user(api::UserID userID);
+  void remove_client(api::UserID userID);
 };
 
 } // namespace networking

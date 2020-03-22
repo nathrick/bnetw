@@ -74,6 +74,7 @@ namespace api
         void sendBroadcastMessage(const std::string & msg);
         void sendServerMessage(const std::string & msg);
         void sendMessage(api::UserID userID, const std::string & msg);
+        void disconnect();
         api::UserID id() const;
 
     private:
