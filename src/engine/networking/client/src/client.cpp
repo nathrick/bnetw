@@ -93,11 +93,11 @@ void bnetw::api::Client::ClientImpl::handle_read(const boost::system::error_code
     }
     else
     {
-        if (e.value() == ENOENT)
+        if (e.value() == boost::system::errc::no_such_file_or_directory)
         {
             std::cout << "Server " << server_id_ << " disconnected..." << std::endl;
         }
-        else if(e.value() == ECANCELED)
+        else if(e.value() == boost::system::errc::operation_canceled)
         {
             std::cout << "Disconnected!" << std::endl;
         }

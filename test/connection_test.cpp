@@ -15,19 +15,15 @@ public:
 
     void SetUp()
     {
-        std::cout << __func__ << std::endl;
     }
 
     void TearDown()
     {
-        std::cout << __func__ << std::endl;
     }
 
 protected:
     boost::asio::io_context io_context_;
 };
-
-struct DummyRead {};
 
 TEST_F(connection_test, SimpleAsyncWriteRead)
 {

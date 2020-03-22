@@ -154,7 +154,7 @@ void server::handle_read(const boost::system::error_code &e, api::UserID userID)
   }
   else
   {
-    if (e.value() == ENOENT)
+    if (e.value() == boost::system::errc::no_such_file_or_directory)
     {
       std::cout << "Client " << userID << " disconnected, removing..." << std::endl;
       remove_client(userID);
